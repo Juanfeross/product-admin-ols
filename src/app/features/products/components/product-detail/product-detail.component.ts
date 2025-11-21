@@ -1,0 +1,44 @@
+import { Component, Input } from '@angular/core';
+import { CommonModule, CurrencyPipe } from '@angular/common';
+import { Product } from '../../models/product.model';
+
+@Component({
+  selector: 'app-product-detail',
+  standalone: true,
+  imports: [CommonModule],
+  template: `
+    <div *ngIf="product" class="max-w-4xl mx-auto">
+      <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="md:flex">
+          <div class="md:w-1/2">
+            <img
+              [src]="product.image"
+              [alt]="product.title"
+              class="w-full h-full object-cover"
+            />
+          </div>
+          <div class="md:w-1/2 p-6">
+            <h1 class="text-3xl font-bold mb-4">{{ product.title }}</h1>
+            <p class="text-gray-600 mb-4">{{ product.description }}</p>
+            <div class="mb-4">
+              <span class="text-4xl font-bold text-blue-600">{{ product.price | currency:'USD':'symbol':'1.2-2' }}</span>
+            </div>
+            <div class="mb-4">
+              <span class="px-3 py-1 bg-gray-200 rounded-full text-sm">{{ product.category }}</span>
+            </div>
+            <div *ngIf="product.rating" class="mb-4">
+              <p class="text-sm text-gray-600">
+                Rating: {{ product.rating.rate }} ({{ product.rating.count }} reviews)
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `,
+  styles: []
+})
+export class ProductDetailComponent {
+  @Input() product: Product | null = null;
+}
+
