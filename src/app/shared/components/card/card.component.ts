@@ -5,13 +5,8 @@ import { CommonModule } from '@angular/common';
   selector: 'app-card',
   standalone: true,
   imports: [CommonModule],
-  template: `
-    <div [class]="cardClasses">
-      <div *ngIf="title" class="text-lg font-semibold mb-2">{{ title }}</div>
-      <ng-content></ng-content>
-    </div>
-  `,
-  styles: []
+  templateUrl: './card.component.html',
+  styleUrl: './card.component.css'
 })
 export class CardComponent {
   @Input() title = '';

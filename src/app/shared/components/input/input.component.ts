@@ -13,25 +13,8 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormsModule } from '@angular/f
       multi: true
     }
   ],
-  template: `
-    <div class="flex flex-col">
-      <label *ngIf="label" [for]="id" class="mb-1 text-sm font-medium text-gray-700">
-        {{ label }}
-      </label>
-      <input
-        [id]="id"
-        [type]="type"
-        [placeholder]="placeholder"
-        [disabled]="disabled"
-        [value]="value"
-        (input)="onInput($event)"
-        (blur)="onBlur()"
-        class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
-      />
-      <span *ngIf="error" class="mt-1 text-sm text-red-600">{{ error }}</span>
-    </div>
-  `,
-  styles: []
+  templateUrl: './input.component.html',
+  styleUrl: './input.component.css'
 })
 export class InputComponent implements ControlValueAccessor {
   @Input() id = '';

@@ -1,10 +1,11 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Observable, of, map, tap } from 'rxjs';
 import { ApiService } from '../../../core/services/api/api.service';
 import { StorageService } from '../../../core/services/storage/storage.service';
 import { Product, CreateProductDto, UpdateProductDto } from '../models/product.model';
 
 const STORAGE_KEY = 'products';
+const ORIGINAL_DATA_KEY = 'original-products';
 const API_URL = 'https://fakestoreapi.com/products';
 
 @Injectable({
@@ -22,12 +23,36 @@ export class ProductsService {
     this.storageService.setItem(STORAGE_KEY, products);
   }
 
+  private getOriginalProducts(): Product[] {
+    return this.storageService.getItem<Product[]>(ORIGINAL_DATA_KEY) || [];
+  }
+
+  private setOriginalProducts(products: Product[]): void {
+    this.storageService.setItem(ORIGINAL_DATA_KEY, products);
+  }
+
   getAll(): Observable<Product[]> {
     const stored = this.getStoredProducts();
+    
     if (stored.length > 0) {
       return of(stored);
     }
-    return this.apiService.get<Product[]>(API_URL);
+
+    return this.apiService.get<Product[]>(API_URL).pipe(
+      tap(products => {
+        this.setOriginalProducts(products);
+        this.setStoredProducts(products);
+      })
+    );
+  }
+
+  getCategories(): Observable<string[]> {
+    return this.getAll().pipe(
+      map(products => {
+        const categories = new Set(products.map(p => p.category));
+        return Array.from(categories);
+      })
+    );
   }
 
   getById(id: number): Observable<Product | undefined> {
@@ -67,6 +92,20 @@ export class ProductsService {
     const filtered = stored.filter(p => p.id !== id);
     this.setStoredProducts(filtered);
     return of(true);
+  }
+
+  resetToOriginal(): Observable<Product[]> {
+    const original = this.getOriginalProducts();
+    if (original.length > 0) {
+      this.setStoredProducts(original);
+      return of(original);
+    }
+    return this.apiService.get<Product[]>(API_URL).pipe(
+      tap(products => {
+        this.setOriginalProducts(products);
+        this.setStoredProducts(products);
+      })
+    );
   }
 }
 
