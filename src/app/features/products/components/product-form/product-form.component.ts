@@ -1,7 +1,8 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, signal, inject, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Product, CreateProductDto } from '../../models/product.model';
+import { ToastService } from '../../../../core/services/toast/toast.service';
 
 @Component({
   selector: 'app-product-form',
@@ -12,24 +13,57 @@ import { Product, CreateProductDto } from '../../models/product.model';
 })
 export class ProductFormComponent implements OnInit, OnChanges {
   @Input() product: Product | null = null;
+  @Input() categories: string[] = [];
   @Output() submitForm = new EventEmitter<CreateProductDto>();
   @Output() onCancel = new EventEmitter<void>();
 
   productForm: FormGroup;
   submitted = false;
   @Input() loading = false;
+  imagePreview = signal<string | null>(null);
+  uploadedFile: File | null = null;
+  @ViewChild('fileInput') fileInputRef!: ElementRef<HTMLInputElement>;
 
-  constructor(private fb: FormBuilder) {
+  private fb = inject(FormBuilder);
+  private toastService = inject(ToastService);
+
+  constructor() {
     this.productForm = this.createForm();
   }
 
   ngOnInit(): void {
     this.initializeForm();
+    this.setupImagePreview();
+  }
+
+  private setupImagePreview(): void {
+    this.productForm.get('image')?.valueChanges.subscribe(value => {
+      if (value && (this.isValidUrl(value) || value.startsWith('data:image/'))) {
+        this.imagePreview.set(value);
+        if (!value.startsWith('data:')) {
+          this.uploadedFile = null;
+        }
+      } else if (!value || value.trim() === '') {
+        this.imagePreview.set(null);
+        this.uploadedFile = null;
+        this.clearFileInput();
+      }
+    });
+  }
+
+  private isValidUrl(url: string): boolean {
+    try {
+      const urlObj = new URL(url);
+      return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
+    } catch {
+      return false;
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['product'] && !changes['product'].firstChange) {
+    if (changes['product']) {
       this.initializeForm();
+      this.clearFileInput();
     }
   }
 
@@ -39,7 +73,7 @@ export class ProductFormComponent implements OnInit, OnChanges {
       price: [0, [Validators.required, Validators.min(0.01), this.positiveNumberValidator]],
       description: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(1000)]],
       category: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
-      image: ['', [Validators.required, this.urlValidator]]
+      image: ['', [this.urlValidator]]
     });
   }
 
@@ -56,11 +90,20 @@ export class ProductFormComponent implements OnInit, OnChanges {
   }
 
   private urlValidator(control: AbstractControl): ValidationErrors | null {
-    if (!control.value) {
+    if (!control.value || control.value.trim() === '') {
       return null;
     }
+    
+    const value = control.value.trim();
+    
+    // Accept data URLs (base64 images)
+    if (value.startsWith('data:image/')) {
+      return null;
+    }
+    
+    // Accept HTTP/HTTPS URLs
     try {
-      const url = new URL(control.value);
+      const url = new URL(value);
       return url.protocol === 'http:' || url.protocol === 'https:' ? null : { invalidUrl: true };
     } catch {
       return { invalidUrl: true };
@@ -68,14 +111,21 @@ export class ProductFormComponent implements OnInit, OnChanges {
   }
 
   private initializeForm(): void {
+    this.imagePreview.set(null);
+    this.uploadedFile = null;
+    this.clearFileInput();
+    
     if (this.product) {
       this.productForm.patchValue({
         title: this.product.title,
         price: this.product.price,
         description: this.product.description,
         category: this.product.category,
-        image: this.product.image
+        image: this.product.image || ''
       });
+      if (this.product.image) {
+        this.imagePreview.set(this.product.image);
+      }
     } else {
       this.resetForm();
     }
@@ -91,12 +141,66 @@ export class ProductFormComponent implements OnInit, OnChanges {
       image: ''
     });
     this.submitted = false;
+    this.imagePreview.set(null);
+    this.uploadedFile = null;
+    this.clearFileInput();
+  }
+
+  private clearFileInput(): void {
+    if (this.fileInputRef?.nativeElement) {
+      this.fileInputRef.nativeElement.value = '';
+    }
+  }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      
+      if (!file.type.startsWith('image/')) {
+        this.toastService.error('Por favor, selecciona un archivo de imagen válido');
+        this.clearFileInput();
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        this.toastService.error('La imagen no puede ser mayor a 5MB');
+        this.clearFileInput();
+        return;
+      }
+
+      this.uploadedFile = file;
+      const reader = new FileReader();
+      
+      reader.onload = (e: ProgressEvent<FileReader>) => {
+        const result = e.target?.result as string;
+        this.imagePreview.set(result);
+        this.productForm.patchValue({ image: result }, { emitEvent: false });
+        this.productForm.get('image')?.updateValueAndValidity();
+      };
+      
+      reader.readAsDataURL(file);
+    }
+  }
+
+  removeImage(): void {
+    this.imagePreview.set(null);
+    this.uploadedFile = null;
+    this.clearFileInput();
+    this.productForm.patchValue({ image: '' }, { emitEvent: false });
+    this.productForm.get('image')?.updateValueAndValidity();
+  }
+
+  triggerFileInput(): void {
+    this.fileInputRef?.nativeElement.click();
   }
 
   onSubmit(): void {
     this.submitted = true;
     if (this.productForm.valid) {
       this.submitForm.emit(this.productForm.value);
+    } else {
+      this.toastService.error('Por favor, corrige los errores del formulario.');
     }
   }
 

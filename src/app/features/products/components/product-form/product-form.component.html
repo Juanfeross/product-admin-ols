@@ -48,31 +48,78 @@
 
   <div class="form-group">
     <label for="category" class="form-label">Categoría</label>
-    <input
+    <select
       id="category"
-      type="text"
       formControlName="category"
-      placeholder="Ej: electronics, clothing, etc."
       [class.form-input-error]="isFieldInvalid('category')"
       class="form-input"
-    />
+    >
+      <option value="">Selecciona una categoría</option>
+      @for (category of categories; track category) {
+        <option [value]="category">{{ category.charAt(0).toUpperCase() + category.slice(1) }}</option>
+      }
+    </select>
     @if (isFieldInvalid('category')) {
       <span class="error-message">{{ getFieldError('category') }}</span>
     }
   </div>
 
   <div class="form-group">
-    <label for="image" class="form-label">URL de Imagen</label>
+    <label for="image" class="form-label">URL de Imagen (Opcional)</label>
     <input
       id="image"
       type="url"
       formControlName="image"
-      placeholder="https://ejemplo.com/imagen.jpg"
+      placeholder="https://ejemplo.com/imagen.jpg (opcional)"
       [class.form-input-error]="isFieldInvalid('image')"
       class="form-input"
     />
     @if (isFieldInvalid('image')) {
       <span class="error-message">{{ getFieldError('image') }}</span>
+    }
+
+    <div class="mt-3">
+      <input
+        #fileInput
+        type="file"
+        accept="image/*"
+        (change)="onFileSelected($event)"
+        class="hidden"
+      />
+      <button
+        type="button"
+        (click)="triggerFileInput()"
+        class="px-4 py-2 bg-gradient-to-r from-primary to-primary/90 text-primary-foreground rounded-xl hover:from-primary/90 hover:to-primary/80 transition-all font-semibold text-sm shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex items-center gap-2"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+        </svg>
+        <span>Subir imagen</span>
+      </button>
+      <p class="mt-2 text-xs text-muted-foreground">Formatos: JPG, PNG, GIF. Máximo 5MB</p>
+    </div>
+
+    @if (imagePreview()) {
+      <div class="mt-4 relative">
+        <div class="relative inline-block">
+          <img
+            [src]="imagePreview()!"
+            alt="Preview"
+            class="max-w-full h-auto max-h-64 rounded-lg border border-border shadow-sm"
+            (error)="imagePreview.set(null)"
+          />
+          <button
+            type="button"
+            (click)="removeImage()"
+            class="absolute top-2 right-2 p-1.5 bg-destructive text-destructive-foreground rounded-full hover:bg-destructive/90 transition-all shadow-md cursor-pointer"
+            aria-label="Eliminar imagen"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
     }
   </div>
 
@@ -87,7 +134,7 @@
     <button
       type="submit"
       class="btn btn-primary"
-      [disabled]="(productForm.invalid && submitted) || loading"
+      [disabled]="productForm.invalid || loading"
     >
       @if (loading) {
         <span class="flex items-center gap-2">

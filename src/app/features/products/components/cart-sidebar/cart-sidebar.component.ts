@@ -21,6 +21,8 @@ export class CartSidebarComponent {
 
   cartItems = this.cartService.cartItems;
   cartTotal = this.cartService.cartTotal;
+  imageErrors = new Set<number>();
+  defaultImage = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjZTVlN2ViIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxMCIgZmlsbD0iIzljYTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlbjwvdGV4dD48L3N2Zz4=';
 
   onClose(): void {
     this.closeCart.emit();
@@ -55,6 +57,19 @@ export class CartSidebarComponent {
 
   onCheckout(): void {
     this.toastService.info('Funcionalidad de checkout próximamente');
+  }
+
+  clearCart(): void {
+    this.cartService.clearCart();
+    this.toastService.success('Carrito vaciado correctamente');
+  }
+
+  onImageError(itemId: number): void {
+    this.imageErrors.add(itemId);
+  }
+
+  isImageError(itemId: number): boolean {
+    return this.imageErrors.has(itemId);
   }
 }
 

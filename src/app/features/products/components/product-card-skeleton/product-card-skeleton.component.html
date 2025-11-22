@@ -1,0 +1,27 @@
+<div class="bg-card rounded-xl overflow-hidden border border-border h-full flex flex-col shadow-sm">
+  <!-- Image Skeleton -->
+  <div class="product-image-container">
+    <app-skeleton width="100%" height="100%" [rounded]="false"></app-skeleton>
+  </div>
+
+  <!-- Content Skeleton -->
+  <div class="p-5 flex flex-col gap-3 flex-1">
+    <!-- Title Skeleton -->
+    <app-skeleton width="90%" height="1.25rem"></app-skeleton>
+    <app-skeleton width="70%" height="1.25rem"></app-skeleton>
+
+    <!-- Rating Skeleton -->
+    <app-skeleton width="30%" height="1rem"></app-skeleton>
+
+    <!-- Price and Actions Skeleton -->
+    <div class="flex items-center justify-between pt-2 border-t border-border mt-auto">
+      <app-skeleton width="40%" height="1.5rem"></app-skeleton>
+      <div class="flex gap-2">
+        <app-skeleton width="2.5rem" height="2.5rem" [rounded]="true"></app-skeleton>
+        <app-skeleton width="2.5rem" height="2.5rem" [rounded]="true"></app-skeleton>
+        <app-skeleton width="2.5rem" height="2.5rem" [rounded]="true"></app-skeleton>
+      </div>
+    </div>
+  </div>
+</div>
+

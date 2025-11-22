@@ -3,10 +3,15 @@
   class="confirm-modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
   (mousedown)="onBackdropMouseDown($event)"
   (click)="onBackdropClick($event)"
+  (keydown.escape)="close()"
+  role="dialog"
+  aria-modal="true"
+  [attr.aria-labelledby]="'confirm-modal-title'"
 >
   <div
     class="confirm-modal-content bg-card rounded-2xl shadow-2xl max-w-md w-full border border-border relative"
     (click)="$event.stopPropagation()"
+    tabindex="-1"
   >
     <div class="p-6">
       <div class="flex items-start gap-4">
@@ -32,13 +37,13 @@
           </div>
         }
         <div class="flex-1">
-          <h3 class="text-lg font-semibold text-foreground mb-2">{{ title }}</h3>
+          <h3 id="confirm-modal-title" class="text-lg font-semibold text-foreground mb-2">{{ title }}</h3>
           <p class="text-sm text-muted-foreground">{{ message }}</p>
         </div>
         <button
           (click)="close()"
-          class="flex-shrink-0 text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-primary rounded"
-          aria-label="Cerrar"
+          class="flex-shrink-0 text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-primary rounded cursor-pointer"
+          aria-label="Cerrar modal de confirmación"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -49,8 +54,10 @@
 
     <div class="flex justify-end gap-3 px-6 pb-6">
       <button
+        #cancelButton
         (click)="onCancel()"
-        class="px-5 py-2.5 bg-muted text-muted-foreground rounded-xl hover:bg-muted/80 transition-all font-semibold text-sm border border-border shadow-sm"
+        class="px-5 py-2.5 bg-muted text-muted-foreground rounded-xl hover:bg-muted/80 transition-all font-semibold text-sm border border-border shadow-sm cursor-pointer"
+        aria-label="Cancelar acción"
       >
         {{ cancelText }}
       </button>
@@ -63,6 +70,8 @@
             ? 'px-5 py-2.5 bg-yellow-500 text-white rounded-xl hover:opacity-90 transition-all font-semibold text-sm shadow-md hover:shadow-lg'
             : 'px-5 py-2.5 bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition-all font-semibold text-sm shadow-md hover:shadow-lg'
         "
+        class="cursor-pointer"
+        [attr.aria-label]="confirmText + ' acción'"
       >
         {{ confirmText }}
       </button>

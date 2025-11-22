@@ -39,9 +39,10 @@ export class CartService {
     this.cartTotal.set(total);
   }
 
-  addToCart(product: Product): void {
+  addToCart(product: Product): boolean {
     const items = this.cartItems();
     const existingItem = items.find(item => item.id === product.id);
+    const wasAlreadyInCart = !!existingItem;
 
     if (existingItem) {
       existingItem.quantity += 1;
@@ -51,6 +52,7 @@ export class CartService {
 
     this.cartItems.set([...items]);
     this.saveCart();
+    return wasAlreadyInCart;
   }
 
   removeFromCart(productId: number): void {
@@ -89,6 +91,11 @@ export class CartService {
 
   getCartTotal(): number {
     return this.cartTotal();
+  }
+
+  getProductQuantity(productId: number): number {
+    const item = this.cartItems().find(item => item.id === productId);
+    return item ? item.quantity : 0;
   }
 }
 

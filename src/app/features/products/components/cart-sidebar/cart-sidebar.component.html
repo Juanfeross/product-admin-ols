@@ -37,9 +37,10 @@
           <div class="cart-item bg-muted rounded-xl p-4 shadow-sm">
             <div class="flex gap-4">
               <img
-                [src]="item.image"
+                [src]="isImageError(item.id) ? defaultImage : item.image"
                 [alt]="item.title"
                 class="w-20 h-20 object-cover rounded-lg"
+                (error)="onImageError(item.id)"
               />
               <div class="flex-1 flex flex-col justify-between min-w-0">
                 <div>
@@ -101,12 +102,20 @@
           <span class="font-light text-foreground">Total</span>
           <span class="price-tag">{{ cartTotal() | currency:'USD':'symbol':'1.2-2' }}</span>
         </div>
-        <button
-          (click)="onCheckout()"
-          class="w-full bg-gradient-to-r from-primary to-primary/90 text-primary-foreground py-3.5 rounded-xl hover:from-primary/90 hover:to-primary/80 transition-all font-semibold shadow-md hover:shadow-lg transform hover:scale-[1.02] active:scale-[0.98]"
-        >
-          Proceder a Pagar
-        </button>
+        <div class="flex gap-3">
+          <button
+            (click)="clearCart()"
+            class="flex-1 px-4 py-3 bg-gradient-to-r from-destructive/10 to-destructive/5 text-destructive rounded-xl hover:from-destructive/20 hover:to-destructive/10 transition-all font-semibold border border-destructive/20 hover:border-destructive/40 shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+          >
+            Vaciar Carrito
+          </button>
+          <button
+            (click)="onCheckout()"
+            class="flex-1 bg-gradient-to-r from-primary to-primary/90 text-primary-foreground py-3 rounded-xl hover:from-primary/90 hover:to-primary/80 transition-all font-semibold shadow-md hover:shadow-lg transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+          >
+            Proceder a Pagar
+          </button>
+        </div>
       </div>
     }
   </div>

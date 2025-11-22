@@ -1,15 +1,18 @@
-import { Component, OnInit, signal, computed, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { ProductsService } from '../../services/products.service';
 import { CartService } from '../../services/cart.service';
 import { ToastService } from '../../../../core/services/toast/toast.service';
 import { Product } from '../../models/product.model';
 import { ProductCardComponent } from '../../components/product-card/product-card.component';
+import { ProductCardSkeletonComponent } from '../../components/product-card-skeleton/product-card-skeleton.component';
 import { ProductFormComponent } from '../../components/product-form/product-form.component';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
 import { ConfirmModalComponent } from '../../../../shared/components/confirm-modal/confirm-modal.component';
 import { CartSidebarComponent } from '../../components/cart-sidebar/cart-sidebar.component';
+import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 import { CreateProductDto, UpdateProductDto } from '../../models/product.model';
 
 @Component({
@@ -19,29 +22,39 @@ import { CreateProductDto, UpdateProductDto } from '../../models/product.model';
     CommonModule,
     FormsModule,
     ProductCardComponent,
+    ProductCardSkeletonComponent,
     ProductFormComponent,
     ModalComponent,
     ConfirmModalComponent,
-    CartSidebarComponent
+    CartSidebarComponent,
+    EmptyStateComponent
   ],
   templateUrl: './products-page.component.html',
   styleUrl: './products-page.component.css'
 })
-export class ProductsPageComponent implements OnInit {
+export class ProductsPageComponent implements OnInit, OnDestroy {
   products = signal<Product[]>([]);
   categories = signal<string[]>([]);
   loading = signal(true);
   searchQuery = signal('');
+  debouncedSearchQuery = signal('');
   selectedCategory = signal<string>('all');
+  sortBy = signal<'name' | 'price-asc' | 'price-desc' | 'rating' | 'none'>('none');
   isModalOpen = signal(false);
   editingProduct = signal<Product | null>(null);
   isCartOpen = signal(false);
   isConfirmModalOpen = signal(false);
   productToDelete = signal<number | null>(null);
+  
+  // Pagination
+  itemsPerPage = 12;
+  currentPage = signal(1);
 
   private productsService = inject(ProductsService);
   private cartService = inject(CartService);
   private toastService = inject(ToastService);
+  private searchSubject = new Subject<string>();
+  private destroy$ = new Subject<void>();
 
   cartCount = this.cartService.cartCount;
   saving = signal(false);
@@ -49,18 +62,94 @@ export class ProductsPageComponent implements OnInit {
 
   filteredProducts = computed(() => {
     const products = this.products();
-    const query = this.searchQuery().toLowerCase();
+    const query = this.debouncedSearchQuery().toLowerCase();
     const category = this.selectedCategory();
+    const sort = this.sortBy();
 
-    return products.filter(product => {
+    let filtered = products.filter(product => {
       const matchesSearch = product.title.toLowerCase().includes(query);
       const matchesCategory = category === 'all' || product.category === category;
       return matchesSearch && matchesCategory;
     });
+
+    if (sort !== 'none') {
+      filtered = [...filtered].sort((a, b) => {
+        switch (sort) {
+          case 'name':
+            return a.title.localeCompare(b.title);
+          case 'price-asc':
+            return a.price - b.price;
+          case 'price-desc':
+            return b.price - a.price;
+          case 'rating':
+            const ratingA = a.rating?.rate || 0;
+            const ratingB = b.rating?.rate || 0;
+            return ratingB - ratingA;
+          default:
+            return 0;
+        }
+      });
+    }
+
+    return filtered;
+  });
+
+  getProductCartQuantity = computed(() => {
+    const cartItems = this.cartService.cartItems();
+    return (productId: number) => {
+      const item = cartItems.find(item => item.id === productId);
+      return item ? item.quantity : 0;
+    };
+  });
+
+  totalPages = computed(() => {
+    return Math.ceil(this.filteredProducts().length / this.itemsPerPage);
+  });
+
+  hasMoreProducts = computed(() => {
+    return this.currentPage() < this.totalPages();
+  });
+
+  displayedProducts = computed(() => {
+    const filtered = this.filteredProducts();
+    const page = this.currentPage();
+    const end = page * this.itemsPerPage;
+    return filtered.slice(0, end);
   });
 
   ngOnInit(): void {
     this.initializeProducts();
+    this.setupSearchDebounce();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private setupSearchDebounce(): void {
+    this.searchSubject.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      takeUntil(this.destroy$)
+    ).subscribe(query => {
+      this.debouncedSearchQuery.set(query);
+    });
+  }
+
+  onSearchChange(query: string): void {
+    this.searchQuery.set(query);
+    this.searchSubject.next(query);
+    this.resetPagination();
+  }
+
+  onCategoryChange(category: string): void {
+    this.selectedCategory.set(category);
+    this.resetPagination();
+  }
+
+  onSortChange(): void {
+    this.resetPagination();
   }
 
   private initializeProducts(): void {
@@ -188,8 +277,26 @@ export class ProductsPageComponent implements OnInit {
   }
 
   addToCart(product: Product): void {
-    this.cartService.addToCart(product);
-    this.toastService.success(`${product.title} agregado al carrito`);
+    const wasAlreadyInCart = this.cartService.addToCart(product);
+    if (wasAlreadyInCart) {
+      this.toastService.info(`Cantidad de "${product.title}" actualizada en el carrito`);
+    } else {
+      this.toastService.success(`"${product.title}" agregado al carrito`);
+    }
+  }
+
+  updateProductQuantity(productId: number, quantity: number): void {
+    this.cartService.updateQuantity(productId, quantity);
+  }
+
+  loadMoreProducts(): void {
+    if (this.hasMoreProducts()) {
+      this.currentPage.set(this.currentPage() + 1);
+    }
+  }
+
+  resetPagination(): void {
+    this.currentPage.set(1);
   }
 
   openCart(): void {

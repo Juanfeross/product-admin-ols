@@ -46,11 +46,10 @@
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Loading State -->
     @if (loading()) {
-      <div class="min-h-screen flex items-center justify-center">
-        <div class="text-center">
-          <div class="mb-4 text-muted-foreground">Cargando productos...</div>
-          <div class="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-        </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        @for (item of [1,2,3,4,5,6,7,8]; track item) {
+          <app-product-card-skeleton />
+        }
       </div>
     } @else {
       <!-- Search and Filters -->
@@ -73,57 +72,110 @@
           <input
             type="text"
             placeholder="Buscar productos..."
-            [(ngModel)]="searchQuery"
+            [value]="searchQuery()"
+            (input)="onSearchChange($any($event.target).value)"
+            aria-label="Buscar productos"
             class="w-full pl-12 pr-4 py-3 border border-border rounded-xl bg-card text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent shadow-sm transition-all"
           />
         </div>
 
-        <!-- Category Filter -->
-        <div class="flex gap-3 flex-wrap">
-          <button
-            (click)="selectedCategory.set('all')"
-            [class]="
-              selectedCategory() === 'all'
-                ? 'bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-md'
-                : 'bg-card text-foreground hover:bg-gradient-to-r hover:from-primary/5 hover:to-primary/10 border border-border hover:border-primary/50'
-            "
-            class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm"
-          >
-            Todos
-          </button>
-          @for (category of categories(); track category) {
+        <!-- Filters and Sort -->
+        <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+          <!-- Category Filter -->
+          <div class="flex gap-3 flex-wrap">
             <button
-              (click)="selectedCategory.set(category)"
+              (click)="onCategoryChange('all')"
               [class]="
-                selectedCategory() === category
+                selectedCategory() === 'all'
                   ? 'bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-md'
                   : 'bg-card text-foreground hover:bg-gradient-to-r hover:from-primary/5 hover:to-primary/10 border border-border hover:border-primary/50'
               "
-              class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm"
+              [attr.aria-pressed]="selectedCategory() === 'all'"
+              aria-label="Filtrar por todas las categorías"
+              class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm cursor-pointer"
             >
-              {{ category.charAt(0).toUpperCase() + category.slice(1) }}
+              Todos
             </button>
-          }
+            @for (category of categories(); track category) {
+              <button
+                (click)="onCategoryChange(category)"
+                [class]="
+                  selectedCategory() === category
+                    ? 'bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-md'
+                    : 'bg-card text-foreground hover:bg-gradient-to-r hover:from-primary/5 hover:to-primary/10 border border-border hover:border-primary/50'
+                "
+                [attr.aria-pressed]="selectedCategory() === category"
+                [attr.aria-label]="'Filtrar por categoría ' + category"
+                class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm cursor-pointer"
+              >
+                {{ category.charAt(0).toUpperCase() + category.slice(1) }}
+              </button>
+            }
+          </div>
+
+          <!-- Sort -->
+          <div class="flex items-center gap-2">
+            <label for="sort" class="text-sm font-medium text-muted-foreground">Ordenar por:</label>
+            <select
+              id="sort"
+              [(ngModel)]="sortBy"
+              (change)="onSortChange()"
+              aria-label="Ordenar productos"
+              class="sort-select px-4 py-2.5 pr-10 border border-border rounded-xl bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent shadow-sm transition-all text-sm font-medium cursor-pointer"
+            >
+              <option value="none">Sin ordenar</option>
+              <option value="name">Nombre (A-Z)</option>
+              <option value="price-asc">Precio: Menor a Mayor</option>
+              <option value="price-desc">Precio: Mayor a Menor</option>
+              <option value="rating">Mejor Valorados</option>
+            </select>
+          </div>
         </div>
       </div>
 
       <!-- Products Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            @for (product of filteredProducts(); track product.id) {
+      @if (displayedProducts().length > 0) {
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" role="list" aria-label="Lista de productos">
+          @for (product of displayedProducts(); track product.id) {
+            <div role="listitem">
               <app-product-card
                 [product]="product"
                 [deleting]="deleting() === product.id"
+                [cartQuantity]="getProductCartQuantity()(product.id)"
                 (onEdit)="openEditModal($event)"
                 (onDelete)="deleteProduct($event)"
                 (onAddToCart)="addToCart($event)"
+                (onUpdateQuantity)="updateProductQuantity($event.productId, $event.quantity)"
               />
-            }
-      </div>
-
-      @if (filteredProducts().length === 0) {
-        <div class="text-center py-12">
-          <p class="text-muted-foreground">No se encontraron productos</p>
+            </div>
+          }
         </div>
+
+        <!-- Load More Button -->
+        @if (hasMoreProducts()) {
+          <div class="flex justify-center mt-8">
+            <button
+              (click)="loadMoreProducts()"
+              aria-label="Cargar más productos"
+              class="px-6 py-3 bg-gradient-to-r from-primary to-primary/90 text-primary-foreground rounded-xl hover:from-primary/90 hover:to-primary/80 transition-all font-semibold shadow-md hover:shadow-lg transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+            >
+              Cargar más productos
+            </button>
+          </div>
+        }
+
+        <!-- Pagination Info -->
+        @if (filteredProducts().length > itemsPerPage) {
+          <div class="text-center mt-6 text-sm text-muted-foreground">
+            Mostrando {{ displayedProducts().length }} de {{ filteredProducts().length }} productos
+          </div>
+        }
+      } @else {
+        <app-empty-state
+          [title]="searchQuery() || selectedCategory() !== 'all' ? 'No se encontraron productos' : 'No hay productos'"
+          [message]="searchQuery() || selectedCategory() !== 'all' ? 'Intenta ajustar tus filtros de búsqueda o categoría para encontrar más productos.' : 'Aún no hay productos disponibles. Crea tu primer producto para comenzar.'"
+          icon="search"
+        />
       }
     }
   </main>
@@ -137,6 +189,7 @@
       >
         <app-product-form
           [product]="editingProduct()"
+          [categories]="categories()"
           [loading]="saving()"
           (submitForm)="handleSubmit($event)"
           (onCancel)="closeModal()"

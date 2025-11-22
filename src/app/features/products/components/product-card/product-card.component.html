@@ -5,9 +5,10 @@
   <a [routerLink]="['/products', product.id]" class="block cursor-pointer flex-shrink-0">
     <div class="product-image-container">
       <img
-        [src]="product.image"
+        [src]="imageError ? defaultImage : product.image"
         [alt]="product.title"
         class="product-image"
+        (error)="onImageError()"
       />
     </div>
   </a>
@@ -38,28 +39,78 @@
     <div class="flex items-center justify-between pt-2 border-t border-border mt-auto flex-shrink-0">
       <span class="price-tag text-lg font-bold">{{ product.price | currency:'USD':'symbol':'1.2-2' }}</span>
       <div class="flex gap-2">
-        <button
-          (click)="onAddToCart.emit(product)"
-          class="p-2 bg-gradient-to-br from-primary to-primary/90 text-primary-foreground rounded-xl hover:from-primary/90 hover:to-primary/80 transition-all shadow-sm hover:shadow-md"
-          title="Agregar al carrito"
-        >
-          <svg
-            class="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+        @if (cartQuantity > 0) {
+          <!-- Quantity Control -->
+          <div class="flex items-center gap-2 bg-primary/10 rounded-xl border border-primary/20 px-2 py-1">
+            <button
+              (click)="decrementQuantity()"
+              class="p-1 bg-primary/20 hover:bg-primary/30 rounded-lg transition-all cursor-pointer"
+              aria-label="Disminuir cantidad de {{ product.title }}"
+              title="Disminuir cantidad"
+            >
+              <svg
+                class="w-3.5 h-3.5 text-primary"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M20 12H4"
+                />
+              </svg>
+            </button>
+            <span class="text-sm font-bold text-primary min-w-[1.5rem] text-center" aria-live="polite">{{ cartQuantity }}</span>
+            <button
+              (click)="incrementQuantity()"
+              class="p-1 bg-primary/20 hover:bg-primary/30 rounded-lg transition-all cursor-pointer"
+              aria-label="Aumentar cantidad de {{ product.title }}"
+              title="Aumentar cantidad"
+            >
+              <svg
+                class="w-3.5 h-3.5 text-primary"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+            </button>
+          </div>
+        } @else {
+          <!-- Add to Cart Button -->
+          <button
+            (click)="onAddToCart.emit(product)"
+            class="p-2 bg-gradient-to-br from-primary to-primary/90 text-primary-foreground rounded-xl hover:from-primary/90 hover:to-primary/80 transition-all shadow-sm hover:shadow-md cursor-pointer"
+            [attr.aria-label]="'Agregar ' + product.title + ' al carrito'"
+            title="Agregar al carrito"
           >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 4v16m8-8H4"
-            />
-          </svg>
-        </button>
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+          </button>
+        }
         <button
           (click)="onEdit.emit(product)"
-          class="p-2 bg-gradient-to-br from-blue-500/10 to-blue-400/10 text-blue-600 rounded-xl hover:from-blue-500/20 hover:to-blue-400/20 transition-all border border-blue-500/20 hover:border-blue-500/40"
+          class="p-2 bg-gradient-to-br from-blue-500/10 to-blue-400/10 text-blue-600 rounded-xl hover:from-blue-500/20 hover:to-blue-400/20 transition-all border border-blue-500/20 hover:border-blue-500/40 cursor-pointer"
+          [attr.aria-label]="'Editar producto ' + product.title"
           title="Editar"
         >
           <svg
@@ -79,7 +130,9 @@
         <button
           (click)="onDelete.emit(product.id)"
           [disabled]="deleting"
-          class="p-2 bg-gradient-to-br from-destructive/10 to-destructive/5 text-destructive rounded-xl hover:from-destructive/20 hover:to-destructive/10 transition-all border border-destructive/20 hover:border-destructive/40 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="p-2 bg-gradient-to-br from-destructive/10 to-destructive/5 text-destructive rounded-xl hover:from-destructive/20 hover:to-destructive/10 transition-all border border-destructive/20 hover:border-destructive/40 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          [attr.aria-label]="'Eliminar producto ' + product.title"
+          [attr.aria-busy]="deleting"
           title="Eliminar"
         >
           @if (deleting) {

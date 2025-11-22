@@ -1,0 +1,7 @@
+.product-image-container {
+  aspect-ratio: 1 / 1;
+  background-color: var(--muted);
+  overflow: hidden;
+  border-radius: 0.5rem;
+}
+

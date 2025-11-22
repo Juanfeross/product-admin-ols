@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, AfterViewInit, ViewChild, ElementRef, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -8,7 +8,7 @@ import { CommonModule } from '@angular/common';
   templateUrl: './confirm-modal.component.html',
   styleUrl: './confirm-modal.component.css'
 })
-export class ConfirmModalComponent {
+export class ConfirmModalComponent implements OnInit, AfterViewInit {
   @Input() isOpen = false;
   @Input() title = 'Confirmar acción';
   @Input() message = '¿Estás seguro de que deseas realizar esta acción?';
@@ -18,8 +18,45 @@ export class ConfirmModalComponent {
   @Output() confirm = new EventEmitter<void>();
   @Output() cancel = new EventEmitter<void>();
   @Output() closeModal = new EventEmitter<void>();
+  @ViewChild('cancelButton', { static: false }) cancelButton!: ElementRef<HTMLButtonElement>;
 
   private mouseDownTarget: EventTarget | null = null;
+  private previousActiveElement: HTMLElement | null = null;
+
+  constructor() {
+    effect(() => {
+      if (this.isOpen) {
+        setTimeout(() => this.focusModal(), 0);
+      } else {
+        this.restoreFocus();
+      }
+    });
+  }
+
+  ngOnInit(): void {
+    if (this.isOpen) {
+      this.previousActiveElement = document.activeElement as HTMLElement;
+    }
+  }
+
+  ngAfterViewInit(): void {
+    if (this.isOpen) {
+      this.focusModal();
+    }
+  }
+
+  private focusModal(): void {
+    if (this.cancelButton?.nativeElement) {
+      this.cancelButton.nativeElement.focus();
+    }
+  }
+
+  private restoreFocus(): void {
+    if (this.previousActiveElement) {
+      this.previousActiveElement.focus();
+      this.previousActiveElement = null;
+    }
+  }
 
   onConfirm(): void {
     this.confirm.emit();

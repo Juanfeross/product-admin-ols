@@ -43,9 +43,10 @@
           <div class="md:w-1/2 bg-gradient-to-br from-primary/5 via-muted/20 to-primary/10 flex items-center justify-center">
             <div class="product-detail-image-container w-full h-full min-h-[400px] md:min-h-[600px] flex items-center justify-center p-8 md:p-12">
               <img
-                [src]="product()!.image"
+                [src]="imageError() ? defaultImage : product()!.image"
                 [alt]="product()!.title"
                 class="product-detail-image max-w-full max-h-full object-contain"
+                (error)="onImageError()"
               />
             </div>
           </div>
@@ -93,7 +94,8 @@
               <button
                 (click)="addToCart()"
                 [disabled]="addingToCart()"
-                class="flex-1 px-6 py-3.5 bg-gradient-to-r from-primary to-primary/90 text-primary-foreground rounded-xl hover:from-primary/90 hover:to-primary/80 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-md hover:shadow-lg transform hover:scale-[1.02] active:scale-[0.98]"
+                class="flex-1 px-6 py-3.5 bg-gradient-to-r from-primary to-primary/90 text-primary-foreground rounded-xl hover:from-primary/90 hover:to-primary/80 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-md hover:shadow-lg transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                aria-label="Agregar producto al carrito"
               >
                 @if (addingToCart()) {
                   <svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -108,8 +110,19 @@
                 }
               </button>
               <button
+                (click)="openEditModal()"
+                class="px-6 py-3.5 bg-gradient-to-r from-blue-500 to-blue-400 text-white rounded-xl hover:from-blue-400 hover:to-blue-300 transition-all font-semibold shadow-md hover:shadow-lg transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
+                aria-label="Editar producto"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                <span>Editar</span>
+              </button>
+              <button
                 (click)="goBack()"
-                class="px-6 py-3.5 bg-gradient-to-r from-muted to-muted/80 text-foreground rounded-xl hover:from-muted/90 hover:to-muted/70 transition-all font-semibold border border-border shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98]"
+                class="px-6 py-3.5 bg-gradient-to-r from-muted to-muted/80 text-foreground rounded-xl hover:from-muted/90 hover:to-muted/70 transition-all font-semibold border border-border shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                aria-label="Volver a la lista de productos"
               >
                 Volver
               </button>
@@ -119,5 +132,23 @@
       </div>
     }
   </div>
+
+  <!-- Edit Modal -->
+  @if (product()) {
+    <app-modal
+      [isOpen]="isEditModalOpen()"
+      [title]="'Editar Producto'"
+      [showFooter]="false"
+      (closeModal)="closeEditModal()"
+    >
+      <app-product-form
+        [product]="product()"
+        [categories]="categories()"
+        [loading]="saving()"
+        (submitForm)="handleSubmit($event)"
+        (onCancel)="closeEditModal()"
+      />
+    </app-modal>
+  }
 </div>
 
