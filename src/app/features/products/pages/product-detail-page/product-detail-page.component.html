@@ -1,0 +1,123 @@
+<div class="min-h-screen bg-background">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    @if (loading()) {
+      <div class="min-h-screen flex items-center justify-center">
+        <div class="text-center">
+          <div class="mb-4 text-muted-foreground">Cargando producto...</div>
+          <div class="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+        </div>
+      </div>
+    } @else if (error()) {
+      <div class="text-center py-12">
+        <p class="text-destructive mb-4">{{ error() }}</p>
+        <button
+          (click)="goBack()"
+          class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
+        >
+          Volver a productos
+        </button>
+      </div>
+    } @else if (product()) {
+      <button
+        (click)="goBack()"
+        class="mb-8 flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors group"
+      >
+        <svg
+          class="w-5 h-5 transition-transform group-hover:-translate-x-1"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M15 19l-7-7 7-7"
+          />
+        </svg>
+        <span class="font-medium">Volver a productos</span>
+      </button>
+
+      <div class="bg-card rounded-xl border border-border overflow-hidden shadow-lg">
+        <div class="md:flex md:min-h-[600px]">
+          <div class="md:w-1/2 bg-gradient-to-br from-primary/5 via-muted/20 to-primary/10 flex items-center justify-center">
+            <div class="product-detail-image-container w-full h-full min-h-[400px] md:min-h-[600px] flex items-center justify-center p-8 md:p-12">
+              <img
+                [src]="product()!.image"
+                [alt]="product()!.title"
+                class="product-detail-image max-w-full max-h-full object-contain"
+              />
+            </div>
+          </div>
+          <div class="md:w-1/2 p-8 lg:p-12 flex flex-col gap-6 md:gap-8">
+            <div class="flex items-start justify-between gap-4 flex-wrap">
+              <span class="px-4 py-2 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-full text-sm font-bold uppercase tracking-wide shadow-sm">
+                {{ product()!.category }}
+              </span>
+              @if (product()?.rating) {
+                <div class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-500/20 to-yellow-400/20 border border-yellow-500/30 rounded-full shadow-sm">
+                  <svg class="w-5 h-5 text-yellow-500 fill-yellow-500" viewBox="0 0 24 24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                  </svg>
+                  <span class="font-bold text-foreground">{{ product()!.rating!.rate.toFixed(1) }}</span>
+                  <span class="text-sm text-muted-foreground">({{ product()!.rating!.count }})</span>
+                </div>
+              }
+            </div>
+
+            <div class="flex-1">
+              <h1 class="text-3xl lg:text-4xl xl:text-5xl font-bold text-foreground leading-tight mb-4">
+                {{ product()!.title }}
+              </h1>
+              
+              <div class="flex items-baseline gap-3 mb-6">
+                <span class="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                  {{ product()!.price | currency:'USD':'symbol':'1.2-2' }}
+                </span>
+              </div>
+            </div>
+
+            <div class="border-t border-border pt-6">
+              <h2 class="text-lg font-semibold mb-3 text-foreground flex items-center gap-2">
+                <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Descripción del producto
+              </h2>
+              <p class="text-muted-foreground leading-relaxed text-base mt-2">
+                {{ product()!.description }}
+              </p>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3 pt-4 border-t border-border mt-auto">
+              <button
+                (click)="addToCart()"
+                [disabled]="addingToCart()"
+                class="flex-1 px-6 py-3.5 bg-gradient-to-r from-primary to-primary/90 text-primary-foreground rounded-xl hover:from-primary/90 hover:to-primary/80 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-md hover:shadow-lg transform hover:scale-[1.02] active:scale-[0.98]"
+              >
+                @if (addingToCart()) {
+                  <svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  <span>Agregando...</span>
+                } @else {
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  <span>Agregar al carrito</span>
+                }
+              </button>
+              <button
+                (click)="goBack()"
+                class="px-6 py-3.5 bg-gradient-to-r from-muted to-muted/80 text-foreground rounded-xl hover:from-muted/90 hover:to-muted/70 transition-all font-semibold border border-border shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98]"
+              >
+                Volver
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>
+

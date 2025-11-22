@@ -2,6 +2,7 @@ import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { CartItem } from '../../models/cart-item.model';
 import { CartService } from '../../services/cart.service';
+import { ToastService } from '../../../../core/services/toast/toast.service';
 
 @Component({
   selector: 'app-cart-sidebar',
@@ -15,6 +16,8 @@ export class CartSidebarComponent {
   @Output() closeCart = new EventEmitter<void>();
 
   private cartService = inject(CartService);
+  private toastService = inject(ToastService);
+  private mouseDownTarget: EventTarget | null = null;
 
   cartItems = this.cartService.cartItems;
   cartTotal = this.cartService.cartTotal;
@@ -23,8 +26,15 @@ export class CartSidebarComponent {
     this.closeCart.emit();
   }
 
-  onBackdropClick(): void {
-    this.onClose();
+  onBackdropMouseDown(event: MouseEvent): void {
+    this.mouseDownTarget = event.target;
+  }
+
+  onBackdropClick(event: MouseEvent): void {
+    if (event.target === this.mouseDownTarget && event.target === event.currentTarget) {
+      this.onClose();
+    }
+    this.mouseDownTarget = null;
   }
 
   updateQuantity(productId: number, quantity: number): void {
@@ -39,8 +49,12 @@ export class CartSidebarComponent {
     return this.cartService.getCartTotal();
   }
 
+  getItemSubtotal(item: CartItem): number {
+    return item.price * item.quantity;
+  }
+
   onCheckout(): void {
-    alert('Funcionalidad de checkout próximamente');
+    this.toastService.info('Funcionalidad de checkout próximamente');
   }
 }
 

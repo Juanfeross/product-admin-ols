@@ -1,10 +1,11 @@
 <div
   *ngIf="isOpen"
   class="modal-backdrop fixed inset-0 z-50 flex items-center justify-center p-4"
-  (click)="onBackdropClick()"
+  (mousedown)="onBackdropMouseDown($event)"
+  (click)="onBackdropClick($event)"
 >
   <div
-    class="modal-content bg-card rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col border border-border relative"
+    class="modal-content bg-card rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col border border-border relative"
     (click)="$event.stopPropagation()"
   >
     <!-- Header -->

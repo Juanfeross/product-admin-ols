@@ -42,6 +42,24 @@
   box-shadow: 0 0 0 2px rgba(var(--ring-rgb, 66, 153, 225), 0.2);
 }
 
+.form-input-error,
+.form-textarea.form-input-error {
+  border-color: var(--destructive);
+}
+
+.form-input-error:focus,
+.form-textarea.form-input-error:focus {
+  border-color: var(--destructive);
+  box-shadow: 0 0 0 2px rgba(var(--destructive-rgb, 239, 68, 68), 0.2);
+}
+
+.error-message {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--destructive);
+  margin-top: 0.25rem;
+}
+
 .form-input:disabled,
 .form-textarea:disabled {
   opacity: 0.6;

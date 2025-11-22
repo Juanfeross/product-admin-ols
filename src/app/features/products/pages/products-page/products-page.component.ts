@@ -3,10 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProductsService } from '../../services/products.service';
 import { CartService } from '../../services/cart.service';
+import { ToastService } from '../../../../core/services/toast/toast.service';
 import { Product } from '../../models/product.model';
 import { ProductCardComponent } from '../../components/product-card/product-card.component';
 import { ProductFormComponent } from '../../components/product-form/product-form.component';
 import { ModalComponent } from '../../../../shared/components/modal/modal.component';
+import { ConfirmModalComponent } from '../../../../shared/components/confirm-modal/confirm-modal.component';
 import { CartSidebarComponent } from '../../components/cart-sidebar/cart-sidebar.component';
 import { CreateProductDto, UpdateProductDto } from '../../models/product.model';
 
@@ -19,6 +21,7 @@ import { CreateProductDto, UpdateProductDto } from '../../models/product.model';
     ProductCardComponent,
     ProductFormComponent,
     ModalComponent,
+    ConfirmModalComponent,
     CartSidebarComponent
   ],
   templateUrl: './products-page.component.html',
@@ -33,11 +36,16 @@ export class ProductsPageComponent implements OnInit {
   isModalOpen = signal(false);
   editingProduct = signal<Product | null>(null);
   isCartOpen = signal(false);
+  isConfirmModalOpen = signal(false);
+  productToDelete = signal<number | null>(null);
 
   private productsService = inject(ProductsService);
   private cartService = inject(CartService);
+  private toastService = inject(ToastService);
 
   cartCount = this.cartService.cartCount;
+  saving = signal(false);
+  deleting = signal<number | null>(null);
 
   filteredProducts = computed(() => {
     const products = this.products();
@@ -52,20 +60,33 @@ export class ProductsPageComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.loadProducts();
-    this.loadCategories();
+    this.initializeProducts();
   }
 
-  loadProducts(): void {
+  private initializeProducts(): void {
     this.loading.set(true);
-    this.productsService.getAll().subscribe({
+    this.productsService.initializeProducts().subscribe({
       next: (products: Product[]) => {
         this.products.set(products);
+        this.loadCategories();
         this.loading.set(false);
       },
       error: (error: any) => {
-        console.error('Error loading products:', error);
+        console.error('Error initializing products:', error);
+        this.toastService.error('Error al cargar los productos');
         this.loading.set(false);
+      }
+    });
+  }
+
+  loadProducts(): void {
+    this.productsService.getAll().subscribe({
+      next: (products: Product[]) => {
+        this.products.set(products);
+      },
+      error: (error: any) => {
+        console.error('Error loading products:', error);
+        this.toastService.error('Error al cargar los productos');
       }
     });
   }
@@ -97,6 +118,7 @@ export class ProductsPageComponent implements OnInit {
   }
 
   handleSubmit(productData: CreateProductDto): void {
+    this.saving.set(true);
     if (this.editingProduct()) {
       const updateData: UpdateProductDto = {
         ...productData,
@@ -106,41 +128,68 @@ export class ProductsPageComponent implements OnInit {
         .update(this.editingProduct()!.id, updateData)
         .subscribe({
           next: () => {
+            this.toastService.success('Producto actualizado correctamente');
             this.loadProducts();
             this.closeModal();
+            this.saving.set(false);
           },
           error: (error: any) => {
             console.error('Error updating product:', error);
+            this.toastService.error('Error al actualizar el producto');
+            this.saving.set(false);
           }
         });
     } else {
       this.productsService.create(productData).subscribe({
         next: () => {
+          this.toastService.success('Producto creado correctamente');
           this.loadProducts();
           this.closeModal();
+          this.saving.set(false);
         },
         error: (error: any) => {
           console.error('Error creating product:', error);
+          this.toastService.error('Error al crear el producto');
+          this.saving.set(false);
         }
       });
     }
   }
 
   deleteProduct(id: number): void {
-    if (confirm('¿Estás seguro de que deseas eliminar este producto?')) {
+    this.productToDelete.set(id);
+    this.isConfirmModalOpen.set(true);
+  }
+
+  confirmDelete(): void {
+    const id = this.productToDelete();
+    if (id) {
+      this.deleting.set(id);
       this.productsService.delete(id).subscribe({
         next: () => {
+          this.toastService.success('Producto eliminado correctamente');
           this.loadProducts();
+          this.deleting.set(null);
+          this.closeConfirmModal();
         },
         error: (error: any) => {
           console.error('Error deleting product:', error);
+          this.toastService.error('Error al eliminar el producto');
+          this.deleting.set(null);
+          this.closeConfirmModal();
         }
       });
     }
   }
 
+  closeConfirmModal(): void {
+    this.isConfirmModalOpen.set(false);
+    this.productToDelete.set(null);
+  }
+
   addToCart(product: Product): void {
     this.cartService.addToCart(product);
+    this.toastService.success(`${product.title} agregado al carrito`);
   }
 
   openCart(): void {

@@ -1,15 +1,17 @@
-<form (ngSubmit)="onSubmit()" class="product-form">
+<form [formGroup]="productForm" (ngSubmit)="onSubmit()" class="product-form">
   <div class="form-group">
     <label for="title" class="form-label">Título</label>
     <input
       id="title"
       type="text"
-      [(ngModel)]="formData.title"
-      name="title"
-      required
+      formControlName="title"
       placeholder="Ingresa el título del producto"
+      [class.form-input-error]="isFieldInvalid('title')"
       class="form-input"
     />
+    @if (isFieldInvalid('title')) {
+      <span class="error-message">{{ getFieldError('title') }}</span>
+    }
   </div>
 
   <div class="form-group">
@@ -17,27 +19,31 @@
     <input
       id="price"
       type="number"
-      [(ngModel)]="formData.price"
-      name="price"
-      required
+      formControlName="price"
       min="0"
       step="0.01"
       placeholder="0.00"
+      [class.form-input-error]="isFieldInvalid('price')"
       class="form-input"
     />
+    @if (isFieldInvalid('price')) {
+      <span class="error-message">{{ getFieldError('price') }}</span>
+    }
   </div>
 
   <div class="form-group">
     <label for="description" class="form-label">Descripción</label>
     <textarea
       id="description"
-      [(ngModel)]="formData.description"
-      name="description"
-      required
+      formControlName="description"
       rows="4"
       placeholder="Ingresa la descripción del producto"
+      [class.form-input-error]="isFieldInvalid('description')"
       class="form-textarea"
     ></textarea>
+    @if (isFieldInvalid('description')) {
+      <span class="error-message">{{ getFieldError('description') }}</span>
+    }
   </div>
 
   <div class="form-group">
@@ -45,12 +51,14 @@
     <input
       id="category"
       type="text"
-      [(ngModel)]="formData.category"
-      name="category"
-      required
+      formControlName="category"
       placeholder="Ej: electronics, clothing, etc."
+      [class.form-input-error]="isFieldInvalid('category')"
       class="form-input"
     />
+    @if (isFieldInvalid('category')) {
+      <span class="error-message">{{ getFieldError('category') }}</span>
+    }
   </div>
 
   <div class="form-group">
@@ -58,12 +66,14 @@
     <input
       id="image"
       type="url"
-      [(ngModel)]="formData.image"
-      name="image"
-      required
+      formControlName="image"
       placeholder="https://ejemplo.com/imagen.jpg"
+      [class.form-input-error]="isFieldInvalid('image')"
       class="form-input"
     />
+    @if (isFieldInvalid('image')) {
+      <span class="error-message">{{ getFieldError('image') }}</span>
+    }
   </div>
 
   <div class="form-actions">
@@ -77,8 +87,18 @@
     <button
       type="submit"
       class="btn btn-primary"
+      [disabled]="(productForm.invalid && submitted) || loading"
     >
-      {{ product ? 'Actualizar' : 'Crear' }}
+      @if (loading) {
+        <span class="flex items-center gap-2">
+          <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          {{ product ? 'Actualizando...' : 'Creando...' }}
+        </span>
+      } @else {
+        {{ product ? 'Actualizar' : 'Crear' }}
+      }
     </button>
   </div>
 </form>

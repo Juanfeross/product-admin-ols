@@ -46,6 +46,20 @@ export class ProductsService {
     );
   }
 
+  initializeProducts(): Observable<Product[]> {
+    const original = this.getOriginalProducts();
+    if (original.length > 0) {
+      this.setStoredProducts(original);
+      return of(original);
+    }
+    return this.apiService.get<Product[]>(API_URL).pipe(
+      tap(products => {
+        this.setOriginalProducts(products);
+        this.setStoredProducts(products);
+      })
+    );
+  }
+
   getCategories(): Observable<string[]> {
     return this.getAll().pipe(
       map(products => {

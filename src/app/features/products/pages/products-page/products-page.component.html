@@ -4,7 +4,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
       <div class="flex items-center justify-between">
         <div class="flex-1">
-          <h1 class="text-2xl font-light tracking-tight text-foreground">Store</h1>
+          <h1 class="text-2xl font-light tracking-tight text-foreground">OL Store</h1>
         </div>
         <div class="flex items-center gap-4">
           <button
@@ -31,8 +31,11 @@
           </button>
           <button
             (click)="openCreateModal()"
-            class="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity text-sm font-medium"
+            class="px-5 py-2.5 bg-gradient-to-r from-primary to-primary/90 text-primary-foreground rounded-xl hover:from-primary/90 hover:to-primary/80 transition-all text-sm font-semibold shadow-md hover:shadow-lg flex items-center gap-2 transform hover:scale-[1.02] active:scale-[0.98]"
           >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
             Nuevo Producto
           </button>
         </div>
@@ -51,11 +54,11 @@
       </div>
     } @else {
       <!-- Search and Filters -->
-      <div class="mb-8 space-y-4">
+      <div class="mb-10 space-y-6">
         <!-- Search -->
         <div class="relative">
           <svg
-            class="absolute left-3 top-3 w-5 h-5 text-muted-foreground pointer-events-none"
+            class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground pointer-events-none"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -71,20 +74,20 @@
             type="text"
             placeholder="Buscar productos..."
             [(ngModel)]="searchQuery"
-            class="w-full pl-10 pr-4 py-2 border border-border rounded-lg bg-card text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            class="w-full pl-12 pr-4 py-3 border border-border rounded-xl bg-card text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent shadow-sm transition-all"
           />
         </div>
 
         <!-- Category Filter -->
-        <div class="flex gap-2 flex-wrap">
+        <div class="flex gap-3 flex-wrap">
           <button
             (click)="selectedCategory.set('all')"
             [class]="
               selectedCategory() === 'all'
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                ? 'bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-md'
+                : 'bg-card text-foreground hover:bg-gradient-to-r hover:from-primary/5 hover:to-primary/10 border border-border hover:border-primary/50'
             "
-            class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm"
           >
             Todos
           </button>
@@ -93,10 +96,10 @@
               (click)="selectedCategory.set(category)"
               [class]="
                 selectedCategory() === category
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                  ? 'bg-gradient-to-r from-primary to-primary/80 text-primary-foreground shadow-md'
+                  : 'bg-card text-foreground hover:bg-gradient-to-r hover:from-primary/5 hover:to-primary/10 border border-border hover:border-primary/50'
               "
-              class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm"
             >
               {{ category.charAt(0).toUpperCase() + category.slice(1) }}
             </button>
@@ -109,6 +112,7 @@
             @for (product of filteredProducts(); track product.id) {
               <app-product-card
                 [product]="product"
+                [deleting]="deleting() === product.id"
                 (onEdit)="openEditModal($event)"
                 (onDelete)="deleteProduct($event)"
                 (onAddToCart)="addToCart($event)"
@@ -133,6 +137,7 @@
       >
         <app-product-form
           [product]="editingProduct()"
+          [loading]="saving()"
           (submitForm)="handleSubmit($event)"
           (onCancel)="closeModal()"
         />
@@ -142,6 +147,19 @@
       <app-cart-sidebar
         [isOpen]="isCartOpen()"
         (closeCart)="closeCart()"
+      />
+
+      <!-- Confirm Delete Modal -->
+      <app-confirm-modal
+        [isOpen]="isConfirmModalOpen()"
+        title="Eliminar producto"
+        message="¿Estás seguro de que deseas eliminar este producto? Esta acción no se puede deshacer."
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        type="danger"
+        (confirm)="confirmDelete()"
+        (cancel)="closeConfirmModal()"
+        (closeModal)="closeConfirmModal()"
       />
     </div>
 

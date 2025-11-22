@@ -2,19 +2,34 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
-  selector: 'app-modal',
+  selector: 'app-confirm-modal',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './modal.component.html',
-  styleUrl: './modal.component.css'
+  templateUrl: './confirm-modal.component.html',
+  styleUrl: './confirm-modal.component.css'
 })
-export class ModalComponent {
+export class ConfirmModalComponent {
   @Input() isOpen = false;
-  @Input() title = '';
-  @Input() showFooter = true;
+  @Input() title = 'Confirmar acción';
+  @Input() message = '¿Estás seguro de que deseas realizar esta acción?';
+  @Input() confirmText = 'Confirmar';
+  @Input() cancelText = 'Cancelar';
+  @Input() type: 'danger' | 'warning' | 'info' = 'warning';
+  @Output() confirm = new EventEmitter<void>();
+  @Output() cancel = new EventEmitter<void>();
   @Output() closeModal = new EventEmitter<void>();
 
   private mouseDownTarget: EventTarget | null = null;
+
+  onConfirm(): void {
+    this.confirm.emit();
+    this.close();
+  }
+
+  onCancel(): void {
+    this.cancel.emit();
+    this.close();
+  }
 
   close(): void {
     this.isOpen = false;
