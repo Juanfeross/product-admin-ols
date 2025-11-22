@@ -7,8 +7,7 @@ import { Product } from '../../models/product.model';
   selector: 'app-product-card',
   standalone: true,
   imports: [CommonModule, CurrencyPipe, RouterModule],
-  templateUrl: './product-card.component.html',
-  styleUrl: './product-card.component.css'
+  templateUrl: './product-card.component.html'
 })
 export class ProductCardComponent {
   @Input() product!: Product;

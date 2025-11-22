@@ -6,8 +6,7 @@ import { Product } from '../../models/product.model';
   selector: 'app-product-detail',
   standalone: true,
   imports: [CommonModule, CurrencyPipe],
-  templateUrl: './product-detail.component.html',
-  styleUrl: './product-detail.component.css'
+  templateUrl: './product-detail.component.html'
 })
 export class ProductDetailComponent {
   @Input() product: Product | null = null;

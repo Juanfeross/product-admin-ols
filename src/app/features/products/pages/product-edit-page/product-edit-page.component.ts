@@ -5,8 +5,7 @@ import { CommonModule } from '@angular/common';
   selector: 'app-product-edit-page',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './product-edit-page.component.html',
-  styleUrl: './product-edit-page.component.css'
+  templateUrl: './product-edit-page.component.html'
 })
 export class ProductEditPageComponent {}
 
