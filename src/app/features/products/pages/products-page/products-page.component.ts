@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
+import { Subject, debounceTime, distinctUntilChanged, takeUntil, Observable } from 'rxjs';
 import { ProductsService } from '../../services/products.service';
 import { CartService } from '../../services/cart.service';
 import { ToastService } from '../../../../core/services/toast/toast.service';
@@ -45,8 +45,7 @@ export class ProductsPageComponent implements OnInit, OnDestroy {
   isCartOpen = signal(false);
   isConfirmModalOpen = signal(false);
   productToDelete = signal<number | null>(null);
-  
-  // Pagination
+
   itemsPerPage = 12;
   currentPage = signal(1);
 
@@ -152,6 +151,27 @@ export class ProductsPageComponent implements OnInit, OnDestroy {
     this.resetPagination();
   }
 
+  private handleProductOperation(
+    operation: Observable<Product | void>,
+    successMessage: string,
+    errorMessage: string
+  ): void {
+    this.saving.set(true);
+    operation.subscribe({
+      next: () => {
+        this.toastService.success(successMessage);
+        this.loadProducts();
+        this.closeModal();
+        this.saving.set(false);
+      },
+      error: (error: any) => {
+        console.error('Error:', error);
+        this.toastService.error(errorMessage);
+        this.saving.set(false);
+      }
+    });
+  }
+
   private initializeProducts(): void {
     this.loading.set(true);
     this.productsService.initializeProducts().subscribe({
@@ -207,41 +227,23 @@ export class ProductsPageComponent implements OnInit, OnDestroy {
   }
 
   handleSubmit(productData: CreateProductDto): void {
-    this.saving.set(true);
-    if (this.editingProduct()) {
+    const editingProduct = this.editingProduct();
+    if (editingProduct) {
       const updateData: UpdateProductDto = {
         ...productData,
-        id: this.editingProduct()!.id
+        id: editingProduct.id
       };
-      this.productsService
-        .update(this.editingProduct()!.id, updateData)
-        .subscribe({
-          next: () => {
-            this.toastService.success('Producto actualizado correctamente');
-            this.loadProducts();
-            this.closeModal();
-            this.saving.set(false);
-          },
-          error: (error: any) => {
-            console.error('Error updating product:', error);
-            this.toastService.error('Error al actualizar el producto');
-            this.saving.set(false);
-          }
-        });
+      this.handleProductOperation(
+        this.productsService.update(editingProduct.id, updateData),
+        'Producto actualizado correctamente',
+        'Error al actualizar el producto'
+      );
     } else {
-      this.productsService.create(productData).subscribe({
-        next: () => {
-          this.toastService.success('Producto creado correctamente');
-          this.loadProducts();
-          this.closeModal();
-          this.saving.set(false);
-        },
-        error: (error: any) => {
-          console.error('Error creating product:', error);
-          this.toastService.error('Error al crear el producto');
-          this.saving.set(false);
-        }
-      });
+      this.handleProductOperation(
+        this.productsService.create(productData),
+        'Producto creado correctamente',
+        'Error al crear el producto'
+      );
     }
   }
 

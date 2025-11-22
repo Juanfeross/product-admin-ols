@@ -13,8 +13,7 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormsModule } from '@angular/f
       multi: true
     }
   ],
-  templateUrl: './input.component.html',
-  styleUrl: './input.component.css'
+  templateUrl: './input.component.html'
 })
 export class InputComponent implements ControlValueAccessor {
   @Input() id = '';

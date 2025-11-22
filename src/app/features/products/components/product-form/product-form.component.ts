@@ -93,15 +93,13 @@ export class ProductFormComponent implements OnInit, OnChanges {
     if (!control.value || control.value.trim() === '') {
       return null;
     }
-    
+
     const value = control.value.trim();
-    
-    // Accept data URLs (base64 images)
+
     if (value.startsWith('data:image/')) {
       return null;
     }
-    
-    // Accept HTTP/HTTPS URLs
+
     try {
       const url = new URL(value);
       return url.protocol === 'http:' || url.protocol === 'https:' ? null : { invalidUrl: true };
@@ -114,7 +112,7 @@ export class ProductFormComponent implements OnInit, OnChanges {
     this.imagePreview.set(null);
     this.uploadedFile = null;
     this.clearFileInput();
-    
+
     if (this.product) {
       this.productForm.patchValue({
         title: this.product.title,
@@ -156,7 +154,7 @@ export class ProductFormComponent implements OnInit, OnChanges {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
       const file = input.files[0];
-      
+
       if (!file.type.startsWith('image/')) {
         this.toastService.error('Por favor, selecciona un archivo de imagen válido');
         this.clearFileInput();
@@ -171,14 +169,14 @@ export class ProductFormComponent implements OnInit, OnChanges {
 
       this.uploadedFile = file;
       const reader = new FileReader();
-      
+
       reader.onload = (e: ProgressEvent<FileReader>) => {
         const result = e.target?.result as string;
         this.imagePreview.set(result);
         this.productForm.patchValue({ image: result }, { emitEvent: false });
         this.productForm.get('image')?.updateValueAndValidity();
       };
-      
+
       reader.readAsDataURL(file);
     }
   }

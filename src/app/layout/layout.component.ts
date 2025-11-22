@@ -6,8 +6,7 @@ import { RouterOutlet } from '@angular/router';
   selector: 'app-layout',
   standalone: true,
   imports: [CommonModule, RouterOutlet],
-  templateUrl: './layout.component.html',
-  styleUrl: './layout.component.css'
+  templateUrl: './layout.component.html'
 })
 export class LayoutComponent {}
 
